@@ -86,7 +86,7 @@ describe("POST /users", function () {
     expect(resp.statusCode).toEqual(401);
   });
 
-  test("unauth for non-admin users", async function () {
+  test("forbidden for non-admin users", async function () {
     const resp = await request(app)
       .post("/users")
       .send({
@@ -98,7 +98,7 @@ describe("POST /users", function () {
         isAdmin: true,
       })
       .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.statusCode).toEqual(401);
+    expect(resp.statusCode).toEqual(403);
   });
 
   test("bad request if missing data", async function () {
@@ -166,11 +166,11 @@ describe("GET /users", function () {
     expect(resp.statusCode).toEqual(401);
   });
 
-  test("unauth for non-admin users", async function () {
+  test("forbidden for non-admin users", async function () {
     const resp = await request(app)
       .get("/users")
       .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.statusCode).toEqual(401);
+    expect(resp.statusCode).toEqual(403);
   });
 
   test("fails: test next() handler", async function () {
@@ -208,11 +208,11 @@ describe("GET /users/:username", function () {
     expect(resp.statusCode).toEqual(401);
   });
 
-  test("unauth for other user", async function () {
+  test("forbidden for other user", async function () {
     const resp = await request(app)
       .get(`/users/u1`)
       .set("authorization", `Bearer ${u2Token}`);
-    expect(resp.statusCode).toEqual(401);
+    expect(resp.statusCode).toEqual(403);
   });
 
   test("not found if user not found", async function () {
@@ -251,14 +251,14 @@ describe("PATCH /users/:username", () => {
     expect(resp.statusCode).toEqual(401);
   });
 
-  test("unauth for other user", async function () {
+  test("forbidden for other user", async function () {
     const resp = await request(app)
       .patch(`/users/u1`)
       .send({
         firstName: "New",
       })
       .set("authorization", `Bearer ${u2Token}`);
-    expect(resp.statusCode).toEqual(401);
+    expect(resp.statusCode).toEqual(403);
   });
 
   test("not found if no such user", async function () {
@@ -317,11 +317,11 @@ describe("DELETE /users/:username", function () {
     expect(resp.statusCode).toEqual(401);
   });
 
-  test("unauth for other user", async function () {
+  test("forbidden for other user", async function () {
     const resp = await request(app)
       .delete(`/users/u1`)
       .set("authorization", `Bearer ${u2Token}`);
-    expect(resp.statusCode).toEqual(401);
+    expect(resp.statusCode).toEqual(403);
   });
 
   test("not found if user missing", async function () {

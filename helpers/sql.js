@@ -30,6 +30,20 @@ function searchFilter(data) {
   if (!data){
     return { cols: "", values };
   }
+  // for jobs
+  if (data.title) {
+    cols.push(`title ILIKE $${cols.length + 1}`);
+    values.push(`%${data.title}%`);
+  }
+  if (data.minSalary) {
+    cols.push(`salary >= $${cols.length + 1}`);
+    values.push(data.minSalary);
+  }
+  if (data.hasEquity) {
+    cols.push(`equity > $${cols.length + 1}`);
+    values.push(0);
+  }
+  // for companies
   if (data.name) {
     cols.push(`name ILIKE $${cols.length + 1}`);
     values.push(`%${data.name}%`);

@@ -30,12 +30,12 @@ describe("POST /companies", function () {
     numEmployees: 10,
   };
 
-  test("fail for non-admin users", async function () {
+  test("forbidden for non-admin users", async function () {
     const resp = await request(app)
         .post("/companies")
         .send(newCompany)
         .set("authorization", `Bearer ${u1Token}`);
-        expect(resp.statusCode).toEqual(401);
+        expect(resp.statusCode).toEqual(403);
 
   });
 
@@ -156,6 +156,14 @@ describe("GET /companies/:handle", function () {
         description: "Desc1",
         numEmployees: 1,
         logoUrl: "http://c1.img",
+        jobs: [
+          {
+            id: expect.any(Number),
+            title: "test job",
+            salary: 100000,
+            equity: "0.05",
+          }
+        ]
       },
     });
   });
@@ -169,6 +177,7 @@ describe("GET /companies/:handle", function () {
         description: "Desc2",
         numEmployees: 2,
         logoUrl: "http://c2.img",
+        jobs: []
       },
     });
   });
@@ -209,14 +218,14 @@ describe("PATCH /companies/:handle", function () {
     expect(resp.statusCode).toEqual(401);
   });
 
-  test("unauth for non-admin users", async function () {
+  test("forbidden for non-admin users", async function () {
     const resp = await request(app)
         .patch(`/companies/c1`)
         .send({
           name: "C1-new",
         })
         .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.statusCode).toEqual(401);
+    expect(resp.statusCode).toEqual(403);
   });
 
   test("not found on no such company", async function () {
@@ -266,11 +275,11 @@ describe("DELETE /companies/:handle", function () {
     expect(resp.statusCode).toEqual(401);
   });
 
-  test("unauth for non-admin users", async function () {
+  test("forbidden for non-admin users", async function () {
     const resp = await request(app)
         .delete(`/companies/c1`)
         .set("authorization", `Bearer ${u1Token}`);
-    expect(resp.statusCode).toEqual(401);
+    expect(resp.statusCode).toEqual(403);
   });
 
   test("not found for no such company", async function () {

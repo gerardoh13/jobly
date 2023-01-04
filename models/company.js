@@ -60,9 +60,9 @@ class Company {
                               description,
                               num_employees AS "numEmployees",
                               logo_url AS "logoUrl"
-                              FROM companies
-                              ${where} ${cols}
-                              ORDER BY name`;
+                      FROM companies
+                      ${where} ${cols}
+                      ORDER BY name`;
 
     const companiesRes = await db.query(querySql, values);
     return companiesRes.rows;
