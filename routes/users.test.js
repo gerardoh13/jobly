@@ -11,6 +11,7 @@ const {
   commonBeforeEach,
   commonAfterEach,
   commonAfterAll,
+  getValidJobId,
   u1Token,
   adminToken,
   u2Token,
@@ -199,6 +200,7 @@ describe("GET /users/:username", function () {
         lastName: "U1L",
         email: "user1@user.com",
         isAdmin: false,
+        jobs: []
       },
     });
   });
@@ -329,5 +331,49 @@ describe("DELETE /users/:username", function () {
       .delete(`/users/nope`)
       .set("authorization", `Bearer ${adminToken}`);
     expect(resp.statusCode).toEqual(404);
+  });
+});
+
+/************************************** POST /users/:username/jobs/:jobId */
+
+describe("POST /users/:username", function () {
+  test("works for admins", async function () {
+    const jobId = await getValidJobId();
+    const resp = await request(app)
+      .post(`/users/u1/jobs/${jobId}`)
+      .set("authorization", `Bearer ${adminToken}`);
+    expect(resp.body).toEqual({ applied: jobId.toString() });
+  });
+  test("bad request for duplicate applications", async function () {
+    const jobId = await getValidJobId();
+    const resp = await request(app)
+      .post(`/users/u1/jobs/${jobId}`)
+      .set("authorization", `Bearer ${adminToken}`);
+      const resp2 = await request(app)
+      .post(`/users/u1/jobs/${jobId}`)
+      .set("authorization", `Bearer ${adminToken}`);
+      expect(resp2.statusCode).toEqual(400);
+  });
+  test("unauth for anon", async function () {
+    const jobId = await getValidJobId();
+    const resp = await request(app)
+      .post(`/users/u1/jobs/${jobId}`)    
+      expect(resp.statusCode).toEqual(401);
+  });
+
+  test("forbidden for other user", async function () {
+    const jobId = await getValidJobId();
+    const resp = await request(app)
+      .post(`/users/u1/jobs/${jobId}`)
+      .set("authorization", `Bearer ${u2Token}`);
+      expect(resp.statusCode).toEqual(403);
+  });
+
+  test("not found if user not in db", async function () {
+    const jobId = await getValidJobId();
+    const resp = await request(app)
+      .post(`/users/u44/jobs/${jobId}`)
+      .set("authorization", `Bearer ${adminToken}`);
+      expect(resp.statusCode).toEqual(404);
   });
 });

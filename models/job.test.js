@@ -8,22 +8,13 @@ const {
   commonBeforeEach,
   commonAfterEach,
   commonAfterAll,
+  getValidJobId
 } = require("./_testCommon");
 
 beforeAll(commonBeforeAll);
 beforeEach(commonBeforeEach);
 afterEach(commonAfterEach);
 afterAll(commonAfterAll);
-
-/**
- * returns a valid id to use on tests
- */
-async function getValidId() {
-  const idRes = await db.query(
-    `SELECT id FROM jobs WHERE title = 'cat wrangler'`
-  );
-  return idRes.rows[0].id;
-}
 
 /************************************** create */
 
@@ -58,7 +49,16 @@ describe("create", function () {
       },
     ]);
   });
-
+  test("bad request with bad handle", async function () {
+    try {
+      let jobBadHandle = {...newJob}
+      jobBadHandle.companyHandle = "c999"
+      await Job.create(jobBadHandle);
+      fail();
+    } catch (err) {
+      expect(err instanceof NotFoundError).toBeTruthy();
+    }
+  });
   test("bad request with dupe", async function () {
     try {
       await Job.create(newJob);
@@ -170,7 +170,7 @@ describe("findAll", function () {
 
 describe("get", function () {
   test("works", async function () {
-    const id = await getValidId();
+    const id = await getValidJobId();
     let job = await Job.get(id);
     expect(job).toEqual({
       id: expect.any(Number),
@@ -215,14 +215,14 @@ describe("update", function () {
     title: "dog catcher",
     salary: 50000,
     equity: 0.01,
-    companyHandle: "c2",
   };
   test("works", async function () {
-    const id = await getValidId();
+    const id = await getValidJobId();
     let job = await Job.update(id, updateData);
     job.equity = parseFloat(job.equity);
     expect(job).toEqual({
       id: id,
+      companyHandle: "c3",
       ...updateData,
     });
 
@@ -237,24 +237,23 @@ describe("update", function () {
         title: "dog catcher",
         salary: 50000,
         equity: "0.01",
-        company_handle: "c2",
+        company_handle: "c3",
       },
     ]);
   });
 
   test("works: null fields", async function () {
-    const id = await getValidId();
+    const id = await getValidJobId();
     const updateDataSetNulls = {
       title: "dog catcher",
       salary: null,
       equity: null,
-      companyHandle: "c2",
     };
 
     let job = await Job.update(id, updateDataSetNulls);
     expect(job).toEqual({
       id: id,
-      ...updateDataSetNulls,
+      ...updateDataSetNulls, companyHandle: "c3",
     });
 
     const result = await db.query(
@@ -268,7 +267,7 @@ describe("update", function () {
         title: "dog catcher",
         salary: null,
         equity: null,
-        company_handle: "c2",
+        company_handle: "c3",
       },
     ]);
   });
@@ -296,7 +295,7 @@ describe("update", function () {
 
 describe("remove", function () {
   test("works", async function () {
-    const id = await getValidId();
+    const id = await getValidJobId();
     await Job.remove(id);
     const res = await db.query(`SELECT id FROM jobs WHERE id=${id}`);
     expect(res.rows.length).toEqual(0);

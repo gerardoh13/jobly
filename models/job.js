@@ -3,6 +3,7 @@
 const db = require("../db");
 const { BadRequestError, NotFoundError } = require("../expressError");
 const { sqlForPartialUpdate, searchFilter } = require("../helpers/sql");
+const { commonAfterAll } = require("./_testCommon");
 
 /** Related functions for jobs. */
 
@@ -17,6 +18,14 @@ class Job {
    * */
 
   static async create({ title, salary, equity, companyHandle }) {
+    const handleCheck = await db.query(`
+      SELECT handle
+             FROM companies
+             WHERE handle = $1`,
+             [companyHandle])
+      const handle = handleCheck.rows[0]
+      if (!handle) throw new NotFoundError(`No company: ${companyHandle}`);
+
     const duplicateCheck = await db.query(
       `SELECT id
            FROM jobs
@@ -110,7 +119,7 @@ class Job {
    * This is a "partial update" --- it's fine if data doesn't contain all the
    * fields; this only changes provided ones.
    *
-   * Data can include: {title, salary, equity, companyHandle}
+   * Data can include: {title, salary, equity}
    *
    * Returns {id, title, salary, equity, companyHandle}
    *
@@ -118,9 +127,7 @@ class Job {
    */
 
   static async update(id, data) {
-    const { setCols, values } = sqlForPartialUpdate(data, {
-      companyHandle: "company_handle",
-    });
+    const { setCols, values } = sqlForPartialUpdate(data, {});
     const idVarIdx = "$" + (values.length + 1);
 
     const querySql = `UPDATE jobs 

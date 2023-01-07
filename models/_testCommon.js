@@ -55,10 +55,20 @@ async function commonAfterAll() {
   await db.end();
 }
 
+/**
+ * returns a valid job id to use for tests
+ */
+async function getValidJobId() {
+  const idRes = await db.query(
+    `SELECT id FROM jobs WHERE title = 'cat wrangler'`
+  );
+  return idRes.rows[0].id;
+}
 
 module.exports = {
   commonBeforeAll,
   commonBeforeEach,
   commonAfterEach,
   commonAfterAll,
+  getValidJobId
 };

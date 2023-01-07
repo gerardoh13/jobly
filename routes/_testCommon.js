@@ -94,6 +94,16 @@ async function commonAfterAll() {
   await db.end();
 }
 
+/**
+ * returns a valid job id to use for tests
+ */
+async function getValidJobId() {
+  const idRes = await db.query(
+    `SELECT id FROM jobs WHERE title = 'cat wrangler'`
+  );
+  return idRes.rows[0].id;
+}
+
 const u1Token = createToken({ username: "u1", isAdmin: false });
 const adminToken = createToken({ username: "admin", isAdmin: true });
 const u2Token = createToken({ username: "u2", isAdmin: false });
@@ -103,6 +113,7 @@ module.exports = {
   commonBeforeEach,
   commonAfterEach,
   commonAfterAll,
+  getValidJobId,
   u1Token,
   adminToken,
   u2Token,

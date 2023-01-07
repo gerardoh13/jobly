@@ -10,6 +10,7 @@ const {
   commonBeforeEach,
   commonAfterEach,
   commonAfterAll,
+  getValidJobId,
   u1Token,
   adminToken,
 } = require("./_testCommon");
@@ -18,16 +19,6 @@ beforeAll(commonBeforeAll);
 beforeEach(commonBeforeEach);
 afterEach(commonAfterEach);
 afterAll(commonAfterAll);
-
-/**
- * returns a valid id to use on tests
- */
-async function getValidId() {
-  const idRes = await db.query(
-    `SELECT id FROM jobs WHERE title = 'cat wrangler'`
-  );
-  return idRes.rows[0].id;
-}
 
 /************************************** POST /jobs */
 
@@ -113,7 +104,7 @@ describe("GET /jobs", function () {
     });
   });
 
-  test("works: w/ filter", async function () {
+  test("works: w/ title filter", async function () {
     const resp = await request(app).get("/jobs?title=cat");
     expect(resp.body).toEqual({
       jobs: [
@@ -127,7 +118,20 @@ describe("GET /jobs", function () {
       ],
     });
   });
-
+  test("works: w/ multiple filters", async function () {
+    const resp = await request(app).get("/jobs?title=test&hasEquity=true");
+    expect(resp.body).toEqual({
+      jobs: [
+        {
+          id: expect.any(Number),
+          title: "test job",
+          salary: 100000,
+          equity: "0.05",
+          companyHandle: "c1",
+        },
+      ],
+    });
+  });
   test("fails: inappropriate params", async function () {
     const resp = await request(app).get("/jobs?chungus=big");
     expect(resp.statusCode).toEqual(400);
@@ -154,7 +158,7 @@ describe("GET /jobs", function () {
 
 describe("GET /jobs/:id", function () {
   test("works for anon", async function () {
-    const id = await getValidId();
+    const id = await getValidJobId();
     const resp = await request(app).get(`/jobs/${id}`);
     expect(resp.body).toEqual({
       job: {
@@ -177,7 +181,7 @@ describe("GET /jobs/:id", function () {
 
 describe("PATCH /jobs/:id", function () {
   test("works for admins", async function () {
-    const id = await getValidId();
+    const id = await getValidJobId();
     const resp = await request(app)
       .patch(`/jobs/${id}`)
       .send({
@@ -196,7 +200,7 @@ describe("PATCH /jobs/:id", function () {
   });
 
   test("unauth for anon", async function () {
-    const id = await getValidId();
+    const id = await getValidJobId();
     const resp = await request(app).patch(`/jobs/${id}`).send({
       title: "dog catcher",
     });
@@ -204,7 +208,7 @@ describe("PATCH /jobs/:id", function () {
   });
 
   test("forbidden for non-admin users", async function () {
-    const id = await getValidId();
+    const id = await getValidJobId();
     const resp = await request(app)
       .patch(`/jobs/${id}`)
       .send({
@@ -225,7 +229,7 @@ describe("PATCH /jobs/:id", function () {
   });
 
   test("bad request on companyHandle change attempt", async function () {
-    const id = await getValidId();
+    const id = await getValidJobId();
     const resp = await request(app)
     .patch(`/jobs/${id}`)
     .send({
@@ -236,7 +240,7 @@ describe("PATCH /jobs/:id", function () {
   });
 
   test("bad request on invalid data", async function () {
-    const id = await getValidId();
+    const id = await getValidJobId();
     const resp = await request(app)
       .patch(`/jobs/${id}`)
       .send({
@@ -251,7 +255,7 @@ describe("PATCH /jobs/:id", function () {
 
 describe("DELETE /jobs/:id", function () {
   test("works for admins", async function () {
-    const id = await getValidId();
+    const id = await getValidJobId();
     const resp = await request(app)
       .delete(`/jobs/${id}`)
       .set("authorization", `Bearer ${adminToken}`);
@@ -259,13 +263,13 @@ describe("DELETE /jobs/:id", function () {
   });
 
   test("unauth for anon", async function () {
-    const id = await getValidId();
+    const id = await getValidJobId();
     const resp = await request(app).delete(`/jobs/${id}`);
     expect(resp.statusCode).toEqual(401);
   });
 
   test("forbidden for non-admin users", async function () {
-    const id = await getValidId();
+    const id = await getValidJobId();
     const resp = await request(app)
       .delete(`/jobs/${id}`)
       .set("authorization", `Bearer ${u1Token}`);
